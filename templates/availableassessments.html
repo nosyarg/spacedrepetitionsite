@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+<p>
+This is the available assignments page
+{% for a in assessments %}
+    <p> <a href = "/assess/{{a.idnum}}">Assesment: {{a.idnum}}</a></p>
+{% endfor %}
+</p>
+{% endblock %}
