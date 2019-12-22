@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+<p>
+This is the my skills page
+</p>
+<table style="width:30%">
+<tr>
+<th>Skill</th>
+<th>Due</th>
+<th>Has Been Correct</th>
+<th>Practice</th>
+</tr>
+{% for skill in masterylist %}
+<tr>
+    <td>{{skill[0]}}</td>
+    <td>{{skill[1]}}</td>
+    <td>{{skill[2]}}</td>
+    <td><a href = "practice/{{skill[0]}}" >PRACTICE</a></td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

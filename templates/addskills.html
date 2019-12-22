@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+<p>
+This is the add skills page
+{% for skill in notowned %}
+    <a href = /add/{{skill}}>{{skill}}<a>
+{% endfor %}
+</p>
+{% endblock %}

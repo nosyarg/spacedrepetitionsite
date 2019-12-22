@@ -1,7 +1,11 @@
 from flask import *
+import importlib
 from flask_sqlalchemy import *
 from flask_login import login_user, current_user, LoginManager, UserMixin
 from random import *
+from os import path, listdir
+import json
+from datetime import *
 
 app = Flask(__name__)
 
@@ -10,9 +14,6 @@ app.secret_key = b'change this secret key asap'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///main.db'
 app.config['SQLALCHEMY_BINDS'] = {
     'users': 'sqlite:///users.db',
-    'questions': 'sqlite:///questions.db',
-    'problems': 'sqlite:///problems.db',
-    'assessments': 'sqlite:///assessments.db'
 }
 db = SQLAlchemy(app)
 
@@ -33,27 +34,6 @@ class User(db.Model):
     def __repr__(self):
         return self.username
 
-class Question(db.Model):
-    __bind_key__ = 'questions'
-    idnum = db.Column(db.Integer(),primary_key=True)
-    typename = db.Column(db.String(100),nullable=True) 
-    inputs = db.Column(db.String(1000),nullable=False) 
-    answer = db.Column(db.String(1000),nullable=False) 
-
-class Problem(db.Model):
-    __bind_key__ = 'problems'
-    idnum = db.Column(db.Integer(),primary_key=True)
-    text = db.Column(db.String(100),nullable=True) 
-    inputs = db.Column(db.String(1000),nullable=True) 
-    answer = db.Column(db.String(1000),nullable=False) 
-
-class Assessment(db.Model):
-    __bind_key__ = 'assessments'
-    idnum = db.Column(db.Integer(),primary_key=True)
-    owner = db.Column(db.String(1000))
-    questionlist = db.Column(db.String(10000))
-    seed = db.Column(db.Integer())
-
 @login_manager.user_loader
 def load_user(username):
     allusers = User.query.order_by(User.username).all()
@@ -61,81 +41,9 @@ def load_user(username):
         if(current.username == username):
             return current
 
-@app.route('/viewassessment/<int:idnum>')
-def viewassignment(idnum):
-    return "VIEWING" + str(idnum)
-
-@app.route('/assess/<int:idnum>')
-def assess(idnum):
-    allassessments = Assessment.query.order_by(Assessment.idnum).all()
-    for current in allassessments:
-        if(current.idnum == idnum):
-           thisassessment = current 
-    problemnums = eval(thisassessment.questionlist)
-    questions = []
-    for i in problemnums:
-        question = Problem.query.filter_by(idnum = i).first()
-        questions.append(question)
-    return render_template('assess.html',questions=questions)
-
-@app.route('/availableassessments')
-def availableassessments():
-    assessments = Assessment.query.order_by(Assessment.idnum)
-    return render_template('availableassessments.html',assessments=assessments)
-
-@app.route('/newassessment', methods=['GET'])
-def newassessmentget():
-    return render_template('newassessment.html')
-
-@app.route('/newassessment', methods=['POST'])
-def newassessmentpost():
-    numquestions = int(request.form['numquestions'])
-    inputlist = []
-    for i in range(numquestions):
-        import questions.factoring
-        a = int(10*random()+1)
-        print(a)
-        b = int(10*random()+1)
-        print(b)
-        c = -int(10*random()+1)
-        print(c)
-        if(db.session.query(db.func.max(Problem.idnum)).scalar()== None):
-            newid = 0
-        else:
-            newid = db.session.query(db.func.max(Problem.idnum)).scalar()+1
-        nextproblem = Problem(idnum = newid+1,text = questions.factoring.gettext(a,b,c),answer = str(questions.factoring.getanswer(a,b,c)))
-        try:
-            __bind_key__ = 'problem'
-            db.session.add(nextproblem)
-            db.session.commit()
-        except:
-            return('problem creating assessment')
-        inputlist.append(nextproblem.idnum)
-    if(db.session.query(db.func.max(Assessment.idnum)).scalar()== None):
-        newid = 0
-    else:
-        newid = db.session.query(db.func.max(Assessment.idnum)).scalar()+1
-    completeassessment = Assessment(idnum = newid,owner = current_user.username,questionlist = str(inputlist))
-    try:
-        __bind_key__ = 'assessment'
-        db.session.add(completeassessment)
-        db.session.commit()
-    except:
-        return('problem creating assessment')
-    return render_template('newassessment.html')
-
-@app.route('/assessments')
-def assessments():
-    return render_template('assessments.html')
-
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.route('/myassessments')
-def myassessments():
-    assessments = Assessment.query.order_by(Assessment.idnum)
-    return render_template('myassessments.html',assessments=assessments)
 
 @app.route('/login', methods=['POST','GET'])
 def login():
@@ -156,14 +64,90 @@ def register():
         new_username = request.form['username']
         newuser = User(username = new_username)
         login_user(newuser)
-        try:
-            __bind_key__ = 'users'
-            db.session.add(newuser)
-            db.session.commit()
-            return redirect('/')
-        except:
-            return("ERROR WITH REGISTRATION")
+        __bind_key__ = 'users'
+        db.session.add(newuser)
+        db.session.commit()
+        os.mkdir('users/'+new_username)
+        return redirect('/')
     return render_template('register.html')
+
+@app.route('/myskills')
+def myskills():
+    masteries = getmasteries(current_user.username)
+    print(masteries)
+    subjectlist = masteries.keys()
+    masterylist = [(subj, str(datetime.fromtimestamp(masteries[subj]['due'])),'yes' if(masteries[subj]['hasbeencorrect']) else 'no') for subj in subjectlist]
+    return render_template('myskills.html', masterylist=masterylist)
+
+@app.route('/addskills')    
+def addskills():
+    masteries = getmasteries(current_user.username)
+    ownedskills = masteries.keys()
+    allskills = listdir('questions') 
+    notowned = [skill for skill in allskills if not (skill in ownedskills)]
+    return render_template('addskills.html',notowned=notowned)
+
+@app.route('/add/<string:skill>')
+def add(skill):
+    subject = skill
+    user = current_user.username
+    masterydata = {}
+    masterydata['history'] = []
+    masterydata['due'] = int(datetime.now().strftime("%s"))
+    masterydata['hasbeencorrect'] = 0
+    updatemasteries(user,subject,masterydata)
+    return redirect('/addskills')
+
+@app.route('/practice/<string:skill>',methods=['GET'])
+def practice(skill):
+    skillclass = importlib.import_module('questions.'+skill[:-3])
+    seed = random()
+    seedstorage = open('seedstorage.txt','w')
+    seedstorage.write(str(seed))
+    seedstorage.close()
+    print(skillclass.gettext(seed))
+    return render_template('practice.html',questiontext=skillclass.gettext(seed),questionname=skill)
+
+@app.route('/practice/<string:skill>',methods=['POST'])
+def practicecheck(skill):
+    skillclass = importlib.import_module('questions.'+skill[:-3])
+    seedstorage = open('seedstorage.txt','r')
+    seed = float(seedstorage.read())
+    seedstorage.close()
+    correctanswers = skillclass.getanswer(seed)
+    useranswer = float(request.form['answer'])
+    for ans in correctanswers:
+        if abs(useranswer - ans) < .1:
+            currentmasteries = getsubjectmastery(current_user.username,skill)
+            currentmasteries['hasbeencorrect'] = 1
+            updatemasteries(current_user.username,skill,currentmasteries)
+            return redirect('/myskills')
+    return 'incorrect!'
+
+def updatemasteries(user,subject,masterydata):
+    print('write update to masteries file for user')
+    masteries = getmasteries(user)
+    masteries[subject] = masterydata
+    masterystring = json.dumps(masteries)
+    print(user)
+    writefile = open('users/'+user+'/masteries.json','w')
+    writefile.write(masterystring)
+    writefile.close()
+
+def getmasteries(user):
+    print('get masteries file for user')
+    if(not path.exists('users/'+user+'/masteries.json')):
+        masteries = {}
+    else:
+        readfile = open('users/'+user+'/masteries.json','r')
+        masteries = json.loads(readfile.read())
+        readfile.close()
+    return masteries
+
+def getsubjectmastery(user,subject):
+    masteries = getmasteries(user)
+    return masteries[subject]
+
 
 if __name__ == "__main__":
     app.run(debug=True)
