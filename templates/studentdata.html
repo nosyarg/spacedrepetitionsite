@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+<p>
+This is the my skills page
+</p>
+<table style="width:30%">
+<tr>
+<th></th>
+{% for skill in allskills %}
+<th>
+{{skill}}
+</th>
+{% endfor %}
+</tr>
+{% for row in allrows %}
+<tr>
+    {% for item in row %}
+    <td> {{item}} </td>
+    {% endfor %}
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
