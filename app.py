@@ -83,7 +83,7 @@ def myskills():
 def addskills():
     masteries = getmasteries(current_user.username)
     ownedskills = masteries.keys()
-    allskills = listdir('questions') 
+    allskills = [f for f in os.listdir('questions') if os.path.isfile(os.path.join('questions', f))] 
     notowned = [skill for skill in allskills if not (skill in ownedskills)]
     return render_template('addskills.html',notowned=notowned)
 
@@ -123,6 +123,29 @@ def practicecheck(skill):
             updatemasteries(current_user.username,skill,currentmasteries)
             return redirect('/myskills')
     return 'incorrect!'
+
+@app.route('/studentdata')
+def studentdata():
+    __bind_key__ = 'users'
+    allusers = User.query.order_by(User.username).all()
+    allskills = [f for f in os.listdir('questions') if os.path.isfile(os.path.join('questions', f))] 
+    allrows = []
+    for current in allusers:
+        currentmasteries = getmasteries(current.username)
+        userskills = currentmasteries.keys()
+        currentrow = []
+        currentrow.append(current.username)
+        for skill in allskills:
+            if skill in userskills:
+                if(currentmasteries[skill]['hasbeencorrect']):
+                    currentrow.append('yes')
+                else:
+                    currentrow.append('no')
+            else:
+                currentrow.append('no')
+        allrows.append(currentrow)
+    return render_template('studentdata.html',allskills=allskills,allrows=allrows)
+
 
 def updatemasteries(user,subject,masterydata):
     print('write update to masteries file for user')
