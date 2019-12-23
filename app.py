@@ -74,9 +74,12 @@ def register():
 @app.route('/myskills')
 def myskills():
     masteries = getmasteries(current_user.username)
-    print(masteries)
     subjectlist = masteries.keys()
-    masterylist = [(subj, str(datetime.fromtimestamp(masteries[subj]['due'])),'yes' if(masteries[subj]['hasbeencorrect']) else 'no') for subj in subjectlist]
+    masterylist = []
+    for subj in subjectlist:
+        duedate = str(datetime.fromtimestamp(masteries[subj]['due']))
+        hasbeencorrect = 'yes' if(masteries[subj]['hasbeencorrect']) else 'no'
+        masterylist.append((subj,duedate,hasbeencorrect))
     return render_template('myskills.html', masterylist=masterylist)
 
 @app.route('/addskills')    
@@ -105,7 +108,6 @@ def practice(skill):
     seedstorage = open('seedstorage.txt','w')
     seedstorage.write(str(seed))
     seedstorage.close()
-    print(skillclass.gettext(seed))
     return render_template('practice.html',questiontext=skillclass.gettext(seed),questionname=skill)
 
 @app.route('/practice/<string:skill>',methods=['POST'])
@@ -120,8 +122,14 @@ def practicecheck(skill):
         if abs(useranswer - ans) < .1:
             currentmasteries = getsubjectmastery(current_user.username,skill)
             currentmasteries['hasbeencorrect'] = 1
+            currentmasteries['history'].append((int(datetime.now().strftime("%s")),1))
+            currentmasteries['due'] = calculatedue(currentmasteries)
             updatemasteries(current_user.username,skill,currentmasteries)
             return redirect('/myskills')
+    currentmasteries = getsubjectmastery(current_user.username,skill)
+    currentmasteries['history'].append((int(datetime.now().strftime("%s")),0))
+    currentmasteries['due'] = calculatedue(currentmasteries)
+    updatemasteries(current_user.username,skill,currentmasteries)
     return 'incorrect!'
 
 @app.route('/studentdata')
@@ -148,17 +156,14 @@ def studentdata():
 
 
 def updatemasteries(user,subject,masterydata):
-    print('write update to masteries file for user')
     masteries = getmasteries(user)
     masteries[subject] = masterydata
     masterystring = json.dumps(masteries)
-    print(user)
     writefile = open('users/'+user+'/masteries.json','w')
     writefile.write(masterystring)
     writefile.close()
 
 def getmasteries(user):
-    print('get masteries file for user')
     if(not path.exists('users/'+user+'/masteries.json')):
         masteries = {}
     else:
@@ -171,6 +176,12 @@ def getsubjectmastery(user,subject):
     masteries = getmasteries(user)
     return masteries[subject]
 
+def calculatedue(masteries):
+    lastattempt = masteries['history'][-1]
+    if(lastattempt[1]):
+        return int((datetime.now() + timedelta(days=1)).strftime("%s"))
+    else:
+        return int(datetime.now().strftime("%s"))
 
 if __name__ == "__main__":
     app.run(debug=True)
