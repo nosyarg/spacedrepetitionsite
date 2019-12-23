@@ -77,9 +77,14 @@ def myskills():
     subjectlist = masteries.keys()
     masterylist = []
     for subj in subjectlist:
-        duedate = str(datetime.fromtimestamp(masteries[subj]['due']))
+        duedatefull = datetime.fromtimestamp(masteries[subj]['due'])
+        isdue = duedatefull < datetime.today()
+        print(duedatefull)
+        print(datetime.today())
+        print(isdue)
+        duedate = str(duedatefull.month) + '/' + str(duedatefull.day)
         hasbeencorrect = 'yes' if(masteries[subj]['hasbeencorrect']) else 'no'
-        masterylist.append((subj,duedate,hasbeencorrect))
+        masterylist.append((subj,duedate,hasbeencorrect,isdue))
     return render_template('myskills.html', masterylist=masterylist)
 
 @app.route('/addskills')    
@@ -96,7 +101,7 @@ def add(skill):
     user = current_user.username
     masterydata = {}
     masterydata['history'] = []
-    masterydata['due'] = int(datetime.now().strftime("%s"))
+    masterydata['due'] = int(datetime.today().strftime("%s"))
     masterydata['hasbeencorrect'] = 0
     updatemasteries(user,subject,masterydata)
     return redirect('/addskills')
@@ -179,9 +184,12 @@ def getsubjectmastery(user,subject):
 def calculatedue(masteries):
     lastattempt = masteries['history'][-1]
     if(lastattempt[1]):
-        return int((datetime.now() + timedelta(days=1)).strftime("%s"))
+        return int((datetime.today() + timedelta(days=1)).strftime("%s"))
     else:
-        return int(datetime.now().strftime("%s"))
+        return int(datetime.today().strftime("%s"))
+
+#def timerender():
+    
 
 if __name__ == "__main__":
     app.run(debug=True)

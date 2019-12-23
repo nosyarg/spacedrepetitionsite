@@ -20,7 +20,7 @@ This is the my skills page
 {% for row in allrows %}
 <tr>
     {% for item in row %}
-    <td> {{item}} </td>
+    <td {% if item == 'yes'%} class = correct {% elif item == 'no'  %} class = incorrect {% endif %}> {{item}} </td>
     {% endfor %}
 </tr>
 {% endfor %}
