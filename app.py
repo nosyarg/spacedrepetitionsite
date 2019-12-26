@@ -101,7 +101,10 @@ def add(skill):
     user = current_user.username
     masterydata = {}
     masterydata['history'] = []
-    masterydata['due'] = int(datetime.today().strftime("%s"))
+    #print(datetime.today())
+    #print(datetime.today().strftime("%s"))
+    #print(int(datetime.today().strftime("%s")))
+    masterydata['due'] = int(datetime.today().strftime("%S"))
     masterydata['hasbeencorrect'] = 0
     updatemasteries(user,subject,masterydata)
     return redirect('/addskills')
@@ -127,12 +130,12 @@ def practicecheck(skill):
         if abs(useranswer - ans) < .1:
             currentmasteries = getsubjectmastery(current_user.username,skill)
             currentmasteries['hasbeencorrect'] = 1
-            currentmasteries['history'].append((int(datetime.now().strftime("%s")),1))
+            currentmasteries['history'].append((int(datetime.now().strftime("%S")),1))
             currentmasteries['due'] = calculatedue(currentmasteries)
             updatemasteries(current_user.username,skill,currentmasteries)
             return redirect('/myskills')
     currentmasteries = getsubjectmastery(current_user.username,skill)
-    currentmasteries['history'].append((int(datetime.now().strftime("%s")),0))
+    currentmasteries['history'].append((int(datetime.now().strftime("%S")),0))
     currentmasteries['due'] = calculatedue(currentmasteries)
     updatemasteries(current_user.username,skill,currentmasteries)
     return 'incorrect!'
@@ -184,9 +187,9 @@ def getsubjectmastery(user,subject):
 def calculatedue(masteries):
     lastattempt = masteries['history'][-1]
     if(lastattempt[1]):
-        return int((datetime.today() + timedelta(days=1)).strftime("%s"))
+        return int((datetime.today() + timedelta(days=1)).strftime("%S"))
     else:
-        return int(datetime.today().strftime("%s"))
+        return int(datetime.today().strftime("%S"))
 
 #def timerender():
     
