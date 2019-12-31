@@ -113,17 +113,13 @@ def add(skill):
 def practice(skill):
     skillclass = importlib.import_module('questions.'+skill[:-3])
     seed = random()
-    seedstorage = open('seedstorage.txt','w')
-    seedstorage.write(str(seed))
-    seedstorage.close()
+    session['seed'] = seed
     return render_template('practice.html',questiontext=skillclass.gettext(seed),questionname=skill)
 
 @app.route('/practice/<string:skill>',methods=['POST'])
 def practicecheck(skill):
     skillclass = importlib.import_module('questions.'+skill[:-3])
-    seedstorage = open('seedstorage.txt','r')
-    seed = float(seedstorage.read())
-    seedstorage.close()
+    seed = session['seed']
     correctanswers = skillclass.getanswer(seed)
     useranswer = float(request.form['answer'])
     for ans in correctanswers:
