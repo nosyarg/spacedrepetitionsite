@@ -40,7 +40,7 @@ def load_user(username):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html',currentuser = current_user.username)
 
 @app.route('/login', methods=['POST'])
 def loginpost():
@@ -48,26 +48,32 @@ def loginpost():
     allusers = User.query.order_by(User.username).all()
     for current in allusers:
         if(current.username == check_username):
-            login_user(current)
+            try:
+                login_user(current)
+            except:
+                return render_template('error.html',errortext = "LOGIN FAILED",currentuser = current_user.username)
             return redirect('/')
     return "USERNAME NOT FOUND"
 
 @app.route('/login', methods=['GET'])
 def loginget():
-    return render_template('login.html')
+    return render_template('login.html',currentuser = current_user.username)
 
 @app.route('/register', methods=['POST'])
 def registerpost():
     new_username = request.form['username']
     newuser = User(username = new_username,masteries = '{}')
-    login_user(newuser)
-    db.session.add(newuser)
-    db.session.commit()
+    try:
+        login_user(newuser)
+        db.session.add(newuser)
+        db.session.commit()
+    except:
+        return render_template('error.html', errortext = "registration error",currentuser = current_user.username)
     return redirect('/')
 
 @app.route('/register', methods=['GET'])
 def registerget():
-    return render_template('register.html')
+    return render_template('register.html',currentuser = current_user.username)
 
 @app.route('/myskills')
 def myskills():
@@ -80,7 +86,7 @@ def myskills():
         duedate = str(duedatefull.month) + '/' + str(duedatefull.day)
         hasbeencorrect = 'yes' if(masteries[subj]['hasbeencorrect']) else 'no'
         masterylist.append((subj,duedate,hasbeencorrect,isdue))
-    return render_template('myskills.html', masterylist=masterylist)
+    return render_template('myskills.html', masterylist=masterylist,currentuser = current_user.username)
 
 @app.route('/addskills')    
 def addskills():
@@ -88,7 +94,7 @@ def addskills():
     ownedskills = masteries.keys()
     allskills = [f for f in os.listdir('questions') if os.path.isfile(os.path.join('questions', f))] 
     notowned = [skill for skill in allskills if not (skill in ownedskills)]
-    return render_template('addskills.html',notowned=notowned)
+    return render_template('addskills.html',notowned=notowned,currentuser = current_user.username)
 
 @app.route('/add/<string:skill>')
 def add(skill):
@@ -106,7 +112,7 @@ def practice(skill):
     skillclass = importlib.import_module('questions.'+skill[:-3])
     seed = random()
     session['seed'] = seed
-    return render_template('practice.html',questiontext=skillclass.gettext(seed),questionname=skill)
+    return render_template('practice.html',questiontext=skillclass.gettext(seed),questionname=skill,currentuser = current_user.username)
 
 @app.route('/practice/<string:skill>',methods=['POST'])
 def practicecheck(skill):
@@ -126,7 +132,7 @@ def practicecheck(skill):
     currentmasteries['history'].append((int(datetime.now().timestamp()),0))
     currentmasteries['due'] = calculatedue(currentmasteries)
     updatemasteries(current_user.username,skill,currentmasteries)
-    return 'incorrect!'
+    return render_template('error.html', errortext = 'incorrect!',currentuser = current_user.username)
 
 @app.route('/studentdata')
 def studentdata():
@@ -147,7 +153,7 @@ def studentdata():
             else:
                 currentrow.append('no')
         allrows.append(currentrow)
-    return render_template('studentdata.html',allskills=allskills,allrows=allrows)
+    return render_template('studentdata.html',allskills=allskills,allrows=allrows,currentuser = current_user.username)
 
 def updatemasteries(user,subject,masterydata):
     masteries = getmasteries(user)
