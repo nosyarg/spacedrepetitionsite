@@ -11,10 +11,7 @@ app = Flask(__name__)
 
 app.secret_key = b'change this secret key asap'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///main.db'
-app.config['SQLALCHEMY_BINDS'] = {
-    'users': 'sqlite:///users.db',
-}
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 db = SQLAlchemy(app)
 
 login_manager = LoginManager()
@@ -22,8 +19,9 @@ login_manager.login_view = 'login'
 login_manager.init_app(app)
 
 class User(db.Model):
-    __bind_key__ = 'users'
+    #__bind_key__ = 'users'
     username = db.Column(db.String(100),primary_key=True)
+    masteries = db.Column(db.Text(),default = '{}')
     is_authenticated = False
     is_active = True
     is_anonymous = False
@@ -45,30 +43,34 @@ def load_user(username):
 def index():
     return render_template('index.html')
 
-@app.route('/login', methods=['POST','GET'])
-def login():
-    if request.method == 'POST':
-        __bind_key__ = 'users'
-        check_username = request.form['username']
-        allusers = User.query.order_by(User.username).all()
-        for current in allusers:
-            if(current.username == check_username):
-                login_user(current)
-                return redirect('/')
-        return "USERNAME NOT FOUND"
+@app.route('/login', methods=['POST'])
+def loginpost():
+    #__bind_key__ = 'users'
+    check_username = request.form['username']
+    allusers = User.query.order_by(User.username).all()
+    for current in allusers:
+        if(current.username == check_username):
+            login_user(current)
+            return redirect('/')
+    return "USERNAME NOT FOUND"
+
+@app.route('/login', methods=['GET'])
+def loginget():
     return render_template('login.html')
 
-@app.route('/register', methods=['POST','GET'])
-def register():
-    if request.method == 'POST':
-        new_username = request.form['username']
-        newuser = User(username = new_username)
-        login_user(newuser)
-        __bind_key__ = 'users'
-        db.session.add(newuser)
-        db.session.commit()
-        os.mkdir('users/'+new_username)
-        return redirect('/')
+@app.route('/register', methods=['POST'])
+def registerpost():
+    new_username = request.form['username']
+    newuser = User(username = new_username,masteries = '{}')
+    login_user(newuser)
+    #__bind_key__ = 'users'
+    db.session.add(newuser)
+    db.session.commit()
+    #os.mkdir('users/'+new_username)
+    return redirect('/')
+
+@app.route('/register', methods=['GET'])
+def registerget():
     return render_template('register.html')
 
 @app.route('/myskills')
@@ -79,9 +81,9 @@ def myskills():
     for subj in subjectlist:
         duedatefull = datetime.fromtimestamp(masteries[subj]['due'])
         isdue = duedatefull < datetime.today()
-        print(duedatefull)
-        print(datetime.today())
-        print(isdue)
+        #print(duedatefull)
+        #print(datetime.today())
+        #print(isdue)
         duedate = str(duedatefull.month) + '/' + str(duedatefull.day)
         hasbeencorrect = 'yes' if(masteries[subj]['hasbeencorrect']) else 'no'
         masterylist.append((subj,duedate,hasbeencorrect,isdue))
@@ -101,10 +103,8 @@ def add(skill):
     user = current_user.username
     masterydata = {}
     masterydata['history'] = []
-    #print(datetime.today())
-    #print(datetime.today().strftime("%s"))
-    #print(int(datetime.today().strftime("%s")))
-    masterydata['due'] = int(datetime.today().strftime("%S"))
+    #masterydata['due'] = int(datetime.today().strftime("%S"))
+    masterydata['due'] = int(datetime.today().timestamp())
     masterydata['hasbeencorrect'] = 0
     updatemasteries(user,subject,masterydata)
     return redirect('/addskills')
@@ -130,19 +130,21 @@ def practicecheck(skill):
         if abs(useranswer - ans) < .1:
             currentmasteries = getsubjectmastery(current_user.username,skill)
             currentmasteries['hasbeencorrect'] = 1
-            currentmasteries['history'].append((int(datetime.now().strftime("%S")),1))
+            #currentmasteries['history'].append((int(datetime.now().strftime("%S")),1))
+            currentmasteries['history'].append((int(datetime.now().timestamp()),1))
             currentmasteries['due'] = calculatedue(currentmasteries)
             updatemasteries(current_user.username,skill,currentmasteries)
             return redirect('/myskills')
     currentmasteries = getsubjectmastery(current_user.username,skill)
-    currentmasteries['history'].append((int(datetime.now().strftime("%S")),0))
+    #currentmasteries['history'].append((int(datetime.now().strftime("%S")),0))
+    currentmasteries['history'].append((int(datetime.now().timestamp()),0))
     currentmasteries['due'] = calculatedue(currentmasteries)
     updatemasteries(current_user.username,skill,currentmasteries)
     return 'incorrect!'
 
 @app.route('/studentdata')
 def studentdata():
-    __bind_key__ = 'users'
+    #__bind_key__ = 'users'
     allusers = User.query.order_by(User.username).all()
     allskills = [f for f in os.listdir('questions') if os.path.isfile(os.path.join('questions', f))] 
     allrows = []
@@ -162,7 +164,7 @@ def studentdata():
         allrows.append(currentrow)
     return render_template('studentdata.html',allskills=allskills,allrows=allrows)
 
-
+'''
 def updatemasteries(user,subject,masterydata):
     masteries = getmasteries(user)
     masteries[subject] = masterydata
@@ -179,6 +181,21 @@ def getmasteries(user):
         masteries = json.loads(readfile.read())
         readfile.close()
     return masteries
+'''
+
+def updatemasteries(user,subject,masterydata):
+    masteries = getmasteries(user)
+    masteries[subject] = masterydata
+    masterystring = json.dumps(masteries)
+    currentuser = User.query.filter_by(username = user).first()
+    currentuser.masteries = masterystring
+    db.session.commit()
+
+
+def getmasteries(user):
+    currentuser = User.query.filter_by(username = user).first()
+    masteries = json.loads(currentuser.masteries)
+    return masteries
 
 def getsubjectmastery(user,subject):
     masteries = getmasteries(user)
@@ -186,13 +203,32 @@ def getsubjectmastery(user,subject):
 
 def calculatedue(masteries):
     lastattempt = masteries['history'][-1]
+    totalattempts = len(masteries['history'])
     if(lastattempt[1]):
-        return int((datetime.today() + timedelta(days=1)).strftime("%S"))
-    else:
-        return int(datetime.today().strftime("%S"))
+        #return int((datetime.today() + timedelta(days=1)).strftime("%S"))
+        timecorrect = timewithoutmistake(masteries['history'])
+        if (timecorrect < timedelta(days=1).total_seconds()):
+            return int((datetime.today() + timedelta(days=1)).timestamp())
+        else:
+            return int((datetime.today() + timedelta(seconds=timecorrect)).timestamp())
+    else:#on incorrect, return current time.
+        #return int(datetime.today().strftime("%S"))
+        return int(datetime.today().timestamp())
 
-#def timerender():
-    
+def timewithoutmistake(history):
+    if(len(history) == 0):
+        #print('error handler')
+        return 0
+    for i in range(len(history)):
+        testattempt = history[-i]
+        print(testattempt[1])
+        if(not testattempt[1]):
+            firstright = history[-i+1]
+            #print('loop')
+            return datetime.now().timestamp() - firstright[0]
+    #print('default')
+    return datetime.now().timestamp() - history[0][0]
+
 
 if __name__ == "__main__":
     app.run(debug=True)

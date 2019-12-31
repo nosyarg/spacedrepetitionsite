@@ -1,4 +1,2 @@
 *.db
-Users/*
-!Users/.gitkeep
 seedstorage.txt
