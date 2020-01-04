@@ -78,6 +78,18 @@ def registerget():
 @app.route('/myskills')
 def myskills():
     masteries = getmasteries(current_user.username)
+    ownedskills = masteries.keys()
+    allskills = [f for f in os.listdir('questions') if os.path.isfile(os.path.join('questions', f))] 
+    notowned = [skill for skill in allskills if not (skill in ownedskills)]
+    for skill in notowned:
+        subject = skill
+        user = current_user.username
+        masterydata = {}
+        masterydata['history'] = []
+        masterydata['due'] = int(datetime.today().timestamp())
+        masterydata['hasbeencorrect'] = 0
+        updatemasteries(user,subject,masterydata)
+    masteries = getmasteries(current_user.username)
     subjectlist = masteries.keys()
     masterylist = []
     for subj in subjectlist:
@@ -119,15 +131,14 @@ def practicecheck(skill):
     skillclass = importlib.import_module('questions.'+skill[:-3])
     seed = session['seed']
     correctanswers = skillclass.getanswer(seed)
-    useranswer = float(request.form['answer'])
-    for ans in correctanswers:
-        if abs(useranswer - ans) < .1:
-            currentmasteries = getsubjectmastery(current_user.username,skill)
-            currentmasteries['hasbeencorrect'] = 1
-            currentmasteries['history'].append((int(datetime.now().timestamp()),1))
-            currentmasteries['due'] = calculatedue(currentmasteries)
-            updatemasteries(current_user.username,skill,currentmasteries)
-            return redirect('/myskills')
+    useranswer = request.form['answer']
+    if skillclass.checkanswer(useranswer,seed):
+        currentmasteries = getsubjectmastery(current_user.username,skill)
+        currentmasteries['hasbeencorrect'] = 1
+        currentmasteries['history'].append((int(datetime.now().timestamp()),1))
+        currentmasteries['due'] = calculatedue(currentmasteries)
+        updatemasteries(current_user.username,skill,currentmasteries)
+        return redirect('/myskills')
     currentmasteries = getsubjectmastery(current_user.username,skill)
     currentmasteries['history'].append((int(datetime.now().timestamp()),0))
     currentmasteries['due'] = calculatedue(currentmasteries)
@@ -194,7 +205,7 @@ def timewithoutmistake(history):#calculate the amount of time which has passed s
             firstright = history[-i+1]
             return datetime.now().timestamp() - firstright[0]
     return datetime.now().timestamp() - history[0][0]
-
+'''
 def checkanswer(useranswer,correctanswers):
     for correctans in correctanswers:
         if isfloat(correctans):
@@ -217,6 +228,7 @@ def checkfloat(userans,correctans):
 
 def checkstring(userans,correctans):
     return userans == correctans
+'''
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True,threaded=True,host = '0.0.0.0')
