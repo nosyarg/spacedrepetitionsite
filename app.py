@@ -130,7 +130,7 @@ def practice(skill):
 def practicecheck(skill):
     skillclass = importlib.import_module('questions.'+skill[:-3])
     seed = session['seed']
-    correctanswers = skillclass.getanswer(seed)
+    #correctanswers = skillclass.getanswer(seed)
     useranswer = request.form['answer']
     if skillclass.checkanswer(useranswer,seed):
         currentmasteries = getsubjectmastery(current_user.username,skill)
