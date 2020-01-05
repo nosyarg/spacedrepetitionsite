@@ -14,7 +14,7 @@ def gendata(inseed):
     b = int(10*random()+1)
     c = -int(10*random()+1)
     return (a,b,c)
-def checkanswer(useranswer,inseed):
+def checkanswer(inseed,useranswer):
     a,b,c = gendata(inseed)
     floatanswer = float(useranswer)
     correctanswers =  [(-b+sqrt(b**2-4*a*c))/(2*a),(-b-sqrt(b**2-4*a*c))/(2*a)]

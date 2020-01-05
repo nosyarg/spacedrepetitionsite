@@ -132,7 +132,7 @@ def practicecheck(skill):
     seed = session['seed']
     #correctanswers = skillclass.getanswer(seed)
     useranswer = request.form['answer']
-    if skillclass.checkanswer(useranswer,seed):
+    if skillclass.checkanswer(seed,useranswer):
         currentmasteries = getsubjectmastery(current_user.username,skill)
         currentmasteries['hasbeencorrect'] = 1
         currentmasteries['history'].append((int(datetime.now().timestamp()),1))
@@ -143,7 +143,7 @@ def practicecheck(skill):
     currentmasteries['history'].append((int(datetime.now().timestamp()),0))
     currentmasteries['due'] = calculatedue(currentmasteries)
     updatemasteries(current_user.username,skill,currentmasteries)
-    return render_template('error.html', errortext = 'incorrect!')
+    return render_template('incorrect.html', skill=skill)
 
 @app.route('/studentdata')
 def studentdata():

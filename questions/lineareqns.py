@@ -15,7 +15,7 @@ def gendata(inseed):
     b = -int(10*random()+1)
     return (a,b)
 
-def checkanswer(useranswer,inseed):
+def checkanswer(inseed,useranswer):
     a,b = gendata(inseed)
     floatanswer = float(useranswer)
     return (abs(floatanswer - (-b/a)) < .1)
