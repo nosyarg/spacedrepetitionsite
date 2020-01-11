@@ -20,7 +20,7 @@ def checkanswer(inseed, user_answer):
     answer = set([Rational(-p,m), Rational(-q,n)])
     user_answer = user_answer.split(",")
     user_answer = [parse_expr(a) for a in user_answer]
-    print(user_answer)
+    #print(user_answer)
     user_answer = set(user_answer)
     return answer == user_answer
 def getanswer(inseed):
@@ -44,9 +44,9 @@ def gendata(inseed):
     return data
 
 
-print(gettext(0))
-print(getanswer(0))
-print(checkanswer(0, '-1'))
+#print(gettext(0))
+#print(getanswer(0))
+#print(checkanswer(0, '-1'))
 #seed = random.random()
 #print(checkanswer(seed, gendata(seed)))
 #print(gendata(0))

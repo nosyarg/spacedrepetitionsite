@@ -1,9 +1,10 @@
-from math import *
+from sympy import *
 from random import *
 
 def gettext(inseed):
     a,b = gendata(inseed)
-    return "Given the linear equation \("+str(a)+'x' + str(b) + "=0\), what is the value of \(x\)?"
+    x = Symbol('x')
+    return "Given the linear equation \(" + latex(a*x+b) + "=0\), what is the value of \(x\)?"
 '''
 def getanswer(inseed):
     a,b = gendata(inseed)
@@ -17,5 +18,5 @@ def gendata(inseed):
 
 def checkanswer(inseed,useranswer):
     a,b = gendata(inseed)
-    floatanswer = float(useranswer)
+    floatanswer = float(sympify(useranswer))
     return (abs(floatanswer - (-b/a)) < .1)

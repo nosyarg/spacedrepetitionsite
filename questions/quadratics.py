@@ -1,4 +1,4 @@
-from math import *
+from sympy import *
 from random import *
 def gettext(inseed):
     a,b,c = gendata(inseed)
@@ -16,7 +16,7 @@ def gendata(inseed):
     return (a,b,c)
 def checkanswer(inseed,useranswer):
     a,b,c = gendata(inseed)
-    floatanswer = float(useranswer)
+    floatanswer = float(sympify(useranswer))
     correctanswers =  [(-b+sqrt(b**2-4*a*c))/(2*a),(-b-sqrt(b**2-4*a*c))/(2*a)]
     for ans in correctanswers:
         if(abs(ans-floatanswer)<.1):
