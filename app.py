@@ -90,7 +90,7 @@ def myskills():
         masterydata['hasbeencorrect'] = 0
         updatemasteries(user,subject,masterydata)
     masteries = getmasteries(current_user.username)
-    subjectlist = masteries.keys()
+    subjectlist = sorted(masteries.keys())
     masterylist = []
     for subj in subjectlist:
         duedatefull = datetime.fromtimestamp(masteries[subj]['due'])
