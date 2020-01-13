@@ -1,7 +1,7 @@
 """
 Solving a quadratic: only one x
 
-ax^2 + b= c ... can result in no real solution.
+a(x-h)^2 + b= c ... can result in no real solution.
 """
 
 from sympy import*
@@ -14,19 +14,21 @@ def gettext(inseed):
     parity = data['parity']
     a = data['a']
     b = data['b']
+    h = data['h']
     c = a*parity*sqr + b
     x = Symbol('x')
-    return "Solve by factoring: \\(" + latex(expand(a*x**2+b)) \
+    return "Solve by any method.  Recommended: completing the square or vertex form: \\(" + latex(expand(a*(x-h)**2+b)) \
             +" =" + latex(c) + "\\)" +"\n" \
             + "(If you have multiple answers, enter them separated by a comma. \n"\
             + "Enter square roots using 'sqrt', as in 'sqrt(2)' for \\(" \
             + latex(sqrt(2)) + "\\).)"
 def checkanswer(inseed, user_answer):
     data = gendata(inseed)
+    h = data['h']
     sqr = data['sqr']
     parity = data['parity']
     if parity == 1:
-        answer = set([-sqrt(sqr), sqrt(sqr)])
+        answer = set([h-sqrt(sqr), h+sqrt(sqr)])
         user_answer = user_answer.split(",")
         user_answer = [parse_expr(a, transformations=transformations) for a in user_answer]
         #print(user_answer)
@@ -37,10 +39,11 @@ def checkanswer(inseed, user_answer):
         
 def getanswer(inseed):
     data = gendata(inseed)
+    h = data['h']
     sqr = data['sqr']
     parity = data['parity']
     if parity == 1:
-        solution_set = [-sqrt(parity*sqr), sqrt(parity*sqr)]
+        solution_set = [h-sqrt(sqr), h+sqrt(sqr)]
         return "\\(" + latex(solution_set[0]) + ", " + latex(solution_set[1]) + "\\)"
     else:
         solution = 'There is no real solution.'
@@ -55,19 +58,19 @@ def gendata(inseed):
     while a ==0:
         a = random.randint(-7,7)
     b = int(random.normal(0, 7))
-    data = {'sqr':sqr, 'a':a, 'b': b, 'parity': parity}
+    h = 0
+    while h ==0:
+        h = random.randint(-9,9)
+    data = {'sqr':sqr, 'a':a, 'b': b, 'h': h, 'parity': parity}
     return data
 
 seed = random.random()
 #seed = 1
 print(gettext(seed))
-print(getanswer(seed))
-data = gendata(seed)
-parity = data['parity']
-sqr = data['sqr']
-print(checkanswer(seed, '-sqrt({0}), sqrt({0})'.format(sqr)))
-print(checkanswer(seed, 'No real Solution'))
-#seed = random.random()
-#print(checkanswer(seed, gendata(seed)))
-#print(gendata(0))
-#print(gendata(0))
+#print(getanswer(seed))
+#data = gendata(seed)
+#parity = data['parity']
+#sqr = data['sqr']
+#h = data['h']
+#print(checkanswer(seed, '{h}-sqrt({sqr}), {h}+sqrt({sqr})'.format(h=h, sqr=sqr)))
+#print(checkanswer(seed, 'No real Solution'))
