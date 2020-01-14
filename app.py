@@ -143,7 +143,8 @@ def practicecheck(skill):
     currentmasteries['history'].append((int(datetime.now().timestamp()),0))
     currentmasteries['due'] = calculatedue(currentmasteries)
     updatemasteries(current_user.username,skill,currentmasteries)
-    return render_template('incorrect.html', skill=skill)
+    correctanswer = skillclass.getanswer(seed)
+    return render_template('incorrect.html', skill=skill,correctanswer=correctanswer)
 
 @app.route('/studentdata')
 def studentdata():
