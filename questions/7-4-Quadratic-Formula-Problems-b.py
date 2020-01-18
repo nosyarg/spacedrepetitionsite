@@ -19,9 +19,9 @@ def gettext(inseed):
     x = Symbol('x')
     LHS = (a+a1)*x**2+(b+b1)*x+c+c1
     RHS = a1*x**2 + b1*x + c1 
-    return "Solve by any method.  \\(" + latex(expand(LHS)) \
-            +" = " + latex(expand(RHS)) + "\\)" +"\n" \
-            + "(If you have multiple answers, enter them separated by a comma. \n"\
+    return "Solve by any method.  \\[" + latex(expand(LHS)) \
+            +" = " + latex(expand(RHS)) + "\\]" + "\n" \
+            + "(If you have multiple answers, enter them separated by a comma. \n\n"\
             + "Enter square roots using 'sqrt', as in 'sqrt(2)' for \\(" \
             + latex(sqrt(2)) + "\\).)"
 def checkanswer(inseed, user_answer):

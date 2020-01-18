@@ -17,11 +17,14 @@ def checkanswer(inseed, user_answer):
     p = data['p']
     n = data['n']
     q = data['q']
-    answer = set([Rational(-p,m), Rational(-q,n)])
+    answer = [Rational(-p,m), Rational(-q,n)]
+    answer = [float(a) for a in answer]
+    answer = set(answer)
     user_answer = user_answer.split(",")
     user_answer = [parse_expr(a) for a in user_answer]
-    #print(user_answer)
+    user_answer = [float(a) for a in user_answer]
     user_answer = set(user_answer)
+    #print(user_answer, answer)
     return answer == user_answer
 def getanswer(inseed):
     data = gendata(inseed)
@@ -46,7 +49,7 @@ def gendata(inseed):
 
 #print(gettext(0))
 #print(getanswer(0))
-#print(checkanswer(0, '-1'))
+#print(checkanswer(0, '-0.6, -3'))
 #seed = random.random()
 #print(checkanswer(seed, gendata(seed)))
 #print(gendata(0))
