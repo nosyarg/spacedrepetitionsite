@@ -21,6 +21,7 @@ This is the my skills page
     <td{% if skill[3]%} class = incorrect {% else %} class = correct {% endif %}>{{skill[1]}}</td>
     <td{% if skill[2] == 'yes'%} class = correct {% elif skill[2] == 'no'  %} class = incorrect {% endif %}>{{skill[2]}}</td>
     <td><a href = "practice/{{skill[0]}}" >PRACTICE</a></td>
+    <td><a href = "test/{{skill[0]}}" >TEST</a></td>
 </tr>
 {% endfor %}
 </table>
