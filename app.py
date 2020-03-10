@@ -40,7 +40,7 @@ def load_user(username):
 
 @app.route('/')
 def index():
-    return render_template('index.html',currentuser = current_user.username)
+    return render_template('index.html')
 
 @app.route('/login', methods=['POST'])
 def loginpost():
@@ -51,13 +51,13 @@ def loginpost():
             try:
                 login_user(current)
             except:
-                return render_template('error.html',errortext = "LOGIN FAILED",currentuser = current_user.username)
+                return render_template('error.html',errortext = "LOGIN FAILED")
             return redirect('/')
     return "USERNAME NOT FOUND"
 
 @app.route('/login', methods=['GET'])
 def loginget():
-    return render_template('login.html',currentuser = current_user.username)
+    return render_template('login.html')
 
 @app.route('/register', methods=['POST'])
 def registerpost():
@@ -68,12 +68,12 @@ def registerpost():
         db.session.add(newuser)
         db.session.commit()
     except:
-        return render_template('error.html', errortext = "registration error",currentuser = current_user.username)
+        return render_template('error.html', errortext = "registration error")
     return redirect('/')
 
 @app.route('/register', methods=['GET'])
 def registerget():
-    return render_template('register.html',currentuser = current_user.username)
+    return render_template('register.html')
 
 @app.route('/myskills')
 def myskills():
@@ -86,7 +86,7 @@ def myskills():
         duedate = str(duedatefull.month) + '/' + str(duedatefull.day)
         hasbeencorrect = 'yes' if(masteries[subj]['hasbeencorrect']) else 'no'
         masterylist.append((subj,duedate,hasbeencorrect,isdue))
-    return render_template('myskills.html', masterylist=masterylist,currentuser = current_user.username)
+    return render_template('myskills.html', masterylist=masterylist)
 
 @app.route('/addskills')    
 def addskills():
@@ -94,7 +94,7 @@ def addskills():
     ownedskills = masteries.keys()
     allskills = [f for f in os.listdir('questions') if os.path.isfile(os.path.join('questions', f))] 
     notowned = [skill for skill in allskills if not (skill in ownedskills)]
-    return render_template('addskills.html',notowned=notowned,currentuser = current_user.username)
+    return render_template('addskills.html',notowned=notowned)
 
 @app.route('/add/<string:skill>')
 def add(skill):
@@ -112,7 +112,7 @@ def practice(skill):
     skillclass = importlib.import_module('questions.'+skill[:-3])
     seed = random()
     session['seed'] = seed
-    return render_template('practice.html',questiontext=skillclass.gettext(seed),questionname=skill,currentuser = current_user.username)
+    return render_template('practice.html',questiontext=skillclass.gettext(seed),questionname=skill)
 
 @app.route('/practice/<string:skill>',methods=['POST'])
 def practicecheck(skill):
@@ -132,7 +132,7 @@ def practicecheck(skill):
     currentmasteries['history'].append((int(datetime.now().timestamp()),0))
     currentmasteries['due'] = calculatedue(currentmasteries)
     updatemasteries(current_user.username,skill,currentmasteries)
-    return render_template('error.html', errortext = 'incorrect!',currentuser = current_user.username)
+    return render_template('error.html', errortext = 'incorrect!')
 
 @app.route('/studentdata')
 def studentdata():
@@ -153,7 +153,7 @@ def studentdata():
             else:
                 currentrow.append('no')
         allrows.append(currentrow)
-    return render_template('studentdata.html',allskills=allskills,allrows=allrows,currentuser = current_user.username)
+    return render_template('studentdata.html',allskills=allskills,allrows=allrows)
 
 def updatemasteries(user,subject,masterydata):
     masteries = getmasteries(user)
@@ -175,16 +175,16 @@ def getsubjectmastery(user,subject):
 def calculatedue(masteries):
     lastattempt = masteries['history'][-1]
     totalattempts = len(masteries['history'])
-    if(lastattempt[1]):
+    if(lastattempt[1]):#on correct, update the interval until the next question.
         timecorrect = timewithoutmistake(masteries['history'])
         if (timecorrect < timedelta(days=1).total_seconds()):
             return int((datetime.today() + timedelta(days=1)).timestamp())
         else:
-            return int((datetime.today() + timedelta(seconds=timecorrect)).timestamp())
+            return int((datetime.today() + timedelta(seconds=1*timecorrect)).timestamp())#this line could be changed to give faster or slower spacing
     else:#on incorrect, return current time.
         return int(datetime.today().timestamp())
 
-def timewithoutmistake(history):
+def timewithoutmistake(history):#calculate the amount of time which has passed since a student has made a mistake on a problem type
     if(len(history) == 0):
         return 0
     for i in range(len(history)):
@@ -195,6 +195,28 @@ def timewithoutmistake(history):
             return datetime.now().timestamp() - firstright[0]
     return datetime.now().timestamp() - history[0][0]
 
+def checkanswer(useranswer,correctanswers):
+    for correctans in correctanswers:
+        if isfloat(correctans):
+            if(checkfloat(useranswer,correctans)):
+                return 1
+        else:
+            if(checkstring(useranswer,correctans)):
+                return 1
+    return 0
+
+def isfloat(floatstr):
+    try:
+        float(floatstr)
+        return 1
+    except ValueError:
+        return 0
+
+def checkfloat(userans,correctans):
+    return abs(userans - correctans) < .1
+
+def checkstring(userans,correctans):
+    return userans == correctans
 
 if __name__ == "__main__":
     app.run(debug=True)
