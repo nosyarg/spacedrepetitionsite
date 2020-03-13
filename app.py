@@ -133,17 +133,49 @@ def practicecheck(skill):
     #correctanswers = skillclass.getanswer(seed)
     useranswer = request.form['answer']
     if skillclass.checkanswer(seed,useranswer):
+        '''
         currentmasteries = getsubjectmastery(current_user.username,skill)
         currentmasteries['hasbeencorrect'] = 1
         currentmasteries['history'].append((int(datetime.now().timestamp()),1))
         currentmasteries['due'] = calculatedue(currentmasteries)
         updatemasteries(current_user.username,skill,currentmasteries)
-        return redirect('/myskills')
+        '''
+        return render_template('correct.html')
+        '''
     currentmasteries = getsubjectmastery(current_user.username,skill)
     currentmasteries['history'].append((int(datetime.now().timestamp()),0))
     currentmasteries['due'] = calculatedue(currentmasteries)
     updatemasteries(current_user.username,skill,currentmasteries)
-    return render_template('incorrect.html', skill=skill)
+    '''
+    correctanswer = skillclass.getanswer(seed)
+    return render_template('incorrect.html', skill=skill,correctanswer=correctanswer)
+
+@app.route('/test/<string:skill>',methods=['GET'])
+def test(skill):
+    skillclass = importlib.import_module('questions.'+skill[:-3])
+    seed = random()
+    session['seed'] = seed
+    return render_template('test.html',questiontext=skillclass.gettext(seed),questionname=skill)
+
+@app.route('/test/<string:skill>',methods=['POST'])
+def testcheck(skill):
+    skillclass = importlib.import_module('questions.'+skill[:-3])
+    seed = session['seed']
+    #correctanswers = skillclass.getanswer(seed)
+    useranswer = request.form['answer']
+    if skillclass.checkanswer(seed,useranswer):
+        currentmasteries = getsubjectmastery(current_user.username,skill)
+        currentmasteries['hasbeencorrect'] = 1
+        currentmasteries['history'].append((int(datetime.now().timestamp()),1))
+        currentmasteries['due'] = calculatedue(currentmasteries)
+        updatemasteries(current_user.username,skill,currentmasteries)
+        return render_template('correct.html')
+    currentmasteries = getsubjectmastery(current_user.username,skill)
+    currentmasteries['history'].append((int(datetime.now().timestamp()),0))
+    currentmasteries['due'] = calculatedue(currentmasteries)
+    updatemasteries(current_user.username,skill,currentmasteries)
+    correctanswer = skillclass.getanswer(seed)
+    return render_template('incorrect.html', skill=skill,correctanswer=correctanswer)
 
 @app.route('/studentdata')
 def studentdata():
