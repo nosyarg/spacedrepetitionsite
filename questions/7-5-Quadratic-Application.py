@@ -3,22 +3,25 @@ Solving a quadratic: only one x
 
 a(x-h)^2 + b= c ... can result in no real solution.
 """
+from decimal import *
 from sympy import*
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 transformations = (standard_transformations + (implicit_multiplication_application,))
 from numpy import random
+getcontext().prec=10
 def gettext(inseed):
     data = gendata(inseed)
-    a = data[0]
-    b = data[1]
+    print('gettext thinks data is ', data)
+    a = N(data[0])
+    b = N(data[1])
     c = data[2]
     which_type = data[5]
     if which_type == 'cannonball':
         v0 = data[3]
         theta = data[4]
         x = Symbol('x')
-        y = a*x**2+b*x+c
-        fcn_latex = latex(y)
+        #y = a*x**2+b*x+c
+        fcn_latex = '{a:.6f}x^2+{b:.3f}x+{c}'.format(a=a, b=b, c=c)
         text = """The vertical height \\(y\\) above the ground of 
         a cannonball shot from an initial height of 
         \\({h0}\\) feet with an initial 
@@ -60,16 +63,19 @@ def gettext(inseed):
     return text
 def checkanswer(inseed, user_answer):
     data = gendata(inseed)
+    print('checkanswer thinks data is', data)
     a = data[0]
+    #print(a)
     b = data[1]
     c = data[2]
-    answer = (-b-sqrt(b**2-4*a*c))/(2*a)
-    answer = float(answer)
+    which_type = data[5]
+    answer = N((-b-sqrt(b**2-4*a*c))/(2*a))
+    #answer = round(answer, 2)
     user_answer = user_answer.split(" ")
     #user_answer = [parse_expr(a, transformations=transformations) for a in user_answer]
-    #print('user_answer', user_answer)
+    print('user_answer', user_answer, 'answer', answer)
     #print(user_answer)
-    user_answer[0] = float(user_answer[0])
+    user_answer[0] = N(user_answer[0])
     print('user answer is ', user_answer, ' and real answer is ', answer)
     if which_type == 'cannonball':
         units = (user_answer[1] == 'ft') or (user_answer[1] == 'ft.') \
@@ -93,7 +99,7 @@ def getanswer(inseed):
     b = data[1]
     c = data[2]
     num_answer = (-b-sqrt(b**2-4*a*c))/(2*a)
-    num_answer = float(num_answer)
+    num_answer = N(num_answer)
     if which_type == 'cannonball':
         solution = '{ans} ft'.format(ans=num_answer)
     else:
@@ -124,23 +130,23 @@ def gendata(inseed):
         a = -16        
         return [a, b, c, starting_height, 0]
     which_type = random.choice(['cannonball', 'bullet'])
-    #which_type = 'bullet'
+    which_type = 'cannonball'
     if which_type == 'cannonball':
         data = cannonballdata()
     else:
         data =  bulletdata()
     data.append(which_type)
     return data
-#seed = random.random()
-###seed = 2
-#print(gettext(seed))
-#print('answer ir ' + getanswer(seed))
-#data = gendata(seed)
-#print(data)
-#which_type = data[5]
-#a = data[0]
-#b = data[1]
-#c = data[2]
-#useranswer = (-b-sqrt(b**2-4*a*c))/(2*a)
-#useranswer = round(useranswer, 2)
-#print(checkanswer(seed, '{useranswer} sec'.format(useranswer=useranswer)))
+seed = random.random()
+#seed = 2
+print(gettext(seed))
+print('answer ir ' + getanswer(seed))
+data = gendata(seed)
+print(data)
+which_type = data[5]
+a = data[0]
+b = data[1]
+c = data[2]
+useranswer = (-b-sqrt(b**2-4*a*c))/(2*a)
+useranswer = round(useranswer, 2)
+print(checkanswer(seed, '{useranswer} ft'.format(useranswer=useranswer)))

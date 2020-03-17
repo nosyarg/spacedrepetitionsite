@@ -20,10 +20,12 @@ def gendata(inseed):
     e = random.randint(2,6)
     expr = (x**e+p)*(x**e+q)
     return expr
-
+def getanswer(inseed):
+    solution = '\\({}\\)'.format(latex(gendata(inseed)))
+    return solution #should be a string
 
 #print(gettext(0))
-seed = random.random()
-print(checkanswer(seed, str(gendata(seed))))
+#seed = random.random()
+#print(checkanswer(seed, str(gendata(seed))))
 #print(gendata(0))
 #print(gendata(0))
